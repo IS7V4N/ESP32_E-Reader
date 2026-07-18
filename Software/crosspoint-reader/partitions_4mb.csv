@@ -1,0 +1,19 @@
+# CrossPoint firmware - 4MB flash partition table
+# Target: ESP32-C3 with 4MB flash (no OTA, single font, WiFi enabled)
+#
+# Memory map:
+#   0x000000 - 0x008FFF : bootloader (36KB, not listed here)
+#   0x009000 - 0x00DFFF : nvs        (20KB) - WiFi credentials, NVS keys
+#   0x00E000 - 0x00FFFF : [gap]      (8KB, standard ESP-IDF requirement)
+#   0x010000 - 0x32FFFF : factory    (3.125MB = 0x320000)
+#   0x330000 - 0x3FFFFF : spiffs     (832KB = 0xD0000)
+#
+# Total: 0x400000 = 4MB
+#
+# Note: app0 was expanded from 2.875MB to 3.125MB to accommodate WiFi stack.
+# SPIFFS reduced from 1.0625MB to 832KB (not used by firmware, settings on SD card).
+
+# Name,   Type, SubType,  Offset,   Size,    Flags
+nvs,      data, nvs,      0x9000,   0x5000,
+app0,     app,  factory,  0x10000,  0x320000,
+spiffs,   data, spiffs,   0x330000, 0xD0000,
