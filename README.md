@@ -7,21 +7,21 @@ A custom-built e-ink reading device based on the ESP32-C3, designed for everyday
 ---
 ## Hardware License
 
-The hardware designs in `/hardware` are licensed under the
-[CERN-OHL-W v2](hardware/LICENSE-HARDWARE).
+The hardware designs in `/Hardware` are licensed under the
+[CERN-OHL-W v2](Hardware/LICENSE).
 
 
 ## Hardware
 
-| Component | Details |
-|---|---|
-| MCU | ESP32-C3 (4MB flash) |
-| Display | Good Display 4.2" grayscale e-ink panel |
-| Storage | SD card (books, cache, user settings) |
-| Frontlight | TI TPS61169 PWM-controlled LED driver, 15V boost |
-| Battery | 700mAh LiPo |
-| USB | USB-C (charging + native USB via differential pair) |
-| PCB | 4-layer, custom KiCad design (Rev. B) |
+| Component  | Details                                             |
+| ---------- | --------------------------------------------------- |
+| MCU        | ESP32-C3 (4MB flash)                                |
+| Display    | Good Display 4.2" grayscale e-ink panel             |
+| Storage    | SD card (books, cache, user settings)               |
+| Frontlight | TI TPS61169 PWM-controlled LED driver, 15V boost    |
+| Battery    | 700mAh LiPo                                         |
+| USB        | USB-C (charging + native USB via differential pair) |
+| PCB        | 4-layer, custom KiCad design (Rev. B)               |
 
 ### PCB stack-up
 
@@ -36,32 +36,32 @@ Ground pour with stitching vias on both outer layers. EMI-sensitive boost conver
 
 ### Power rails
 
-| Rail | Source | Purpose |
-|---|---|---|
-| 3.4–4.2V | LiPo battery | System input |
-| 3.3V | LDO | ESP32-C3, logic |
-| 5V | USB-C input | Charging |
-| ±20V | Boost converter | E-ink panel driver |
-| 15V | Boost converter (TPS61169) | Frontlight LED driver |
+| Rail     | Source                     | Purpose               |
+| -------- | -------------------------- | --------------------- |
+| 3.4–4.2V | LiPo battery               | System input          |
+| 3.3V     | LDO                        | ESP32-C3, logic       |
+| 5V       | USB-C input                | Charging              |
+| ±20V     | Boost converter            | E-ink panel driver    |
+| 15V      | Boost converter (TPS61169) | Frontlight LED driver |
 
 ### Power management
 
 Three operating states optimized for battery life:
 
-| State | Description | Wake latency |
-|---|---|---|
-| Active | Full speed, display updating | — |
-| Sleep | Reduced CPU clock, peripherals idle | Fast |
-| Deep sleep | µA range consumption, triggered by power button | Slow |
+| State      | Description                                     | Wake latency |
+| ---------- | ----------------------------------------------- | ------------ |
+| Active     | Full speed, display updating                    | —            |
+| Sleep      | Reduced CPU clock, peripherals idle             | Fast         |
+| Deep sleep | µA range consumption, triggered by power button | Slow         |
 
 The device enters Sleep automatically after a display update completes. Deep sleep is only used when powered off via the power button.
 
 ### Controls
 
-| Button | Function |
-|---|---|
+| Button                        | Function                                                         |
+| ----------------------------- | ---------------------------------------------------------------- |
 | Left / Right / Back / Confirm | Context-sensitive navigation (current function shown on display) |
-| Power button | Short press: page turn / Long press: power on/off |
+| Power button                  | Short press: page turn / Long press: power on/off                |
 
 ---
 
