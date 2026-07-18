@@ -23,6 +23,8 @@ The hardware designs in `/Hardware` are licensed under the
 | USB        | USB-C (charging + native USB via differential pair) |
 | PCB        | 4-layer, custom KiCad design (Rev. B)               |
 
+![PCB layout](Hardware/Images/ESP32_Ereader-layout.png)
+
 ### PCB stack-up
 
 ```
