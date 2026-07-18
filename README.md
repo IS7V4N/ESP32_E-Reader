@@ -1,6 +1,6 @@
 # ESP32 E-Reader
 
-A custom-built e-ink reading device based on the ESP32-C3, designed for everyday use. Built around a 4.2" e-ink display with a frontlight for reading in the dark enviroment, running a modified version of the [Crosspoint](https://github.com/crosspoint-reader/crosspoint-reader) open-source firmware adapted for custom hardware. The goal was to build a capable, low-cost alternative to commercial e-readers with full control over both hardware and software.
+A custom-built e-ink reading device based on the ESP32-C3, designed for everyday use. Built around a 4.2" e-ink display with a frontlight for reading in the dark environment, running a modified version of the [Crosspoint](https://github.com/crosspoint-reader/crosspoint-reader) open-source firmware adapted for custom hardware. The goal was to build a capable, low-cost alternative to commercial e-readers with full control over both hardware and software.
 
 > **Note:** This is a fork of [Crosspoint Reader](https://github.com/crosspoint-reader/crosspoint-reader). See [What's changed from upstream](#whats-changed-from-upstream) for a summary of hardware-specific modifications.
 
@@ -78,14 +78,31 @@ Based on [Crosspoint Reader](https://github.com/crosspoint-reader/crosspoint-rea
 - **platformio.ini** — 4MB build configuration
 - **Display refresh** — modified refresh handling for Good Display 4.2" panel compatibility
 
-See [`docs/4mb-build/`](docs/4mb-build/) for detailed documentation on the 4MB build process and known issues.
+See [`docs/4mb-build/`](Software/crosspoint-reader/docs/4mb-build/) for detailed documentation on the 4MB build process and known issues.
 
 ---
 
 ## Repository structure
 
 ```
-
+ESP32_E-Reader/
+├── Hardware/
+│   ├── 3D CAD/                 — enclosure 3D models
+│   ├── Bill Of Materials/      — BOM spreadsheets
+│   ├── PCB/                    — KiCad project (Rev. B)
+│   ├── REV-A/                  — Rev. A schematic/layout reference
+│   └── LICENSE                 — CERN-OHL-W v2
+├── Datasheets of Components/    — component datasheets (PDF)
+└── Software/
+    └── crosspoint-reader/       — firmware (fork of Crosspoint Reader)
+        ├── src/                 — application source (activities, UI)
+        ├── lib/                 — internal libraries (Epub engine, GfxRenderer, HAL, I18n)
+        ├── open-x4-sdk/         — Xteink X4 community SDK (submodule)
+        ├── docs/                — build docs, file formats, 4mb-build notes
+        ├── scripts/             — build/codegen/debugging scripts
+        ├── test/                — unit tests
+        ├── platformio.ini       — build configuration
+        └── LICENSE              — MIT
 ```
 
 ---
@@ -110,7 +127,7 @@ git submodule update --init --recursive
 
 ## Known issues
 
-See [`docs/4mb-build/known-bugs.md`](docs/4mb-build/known-bugs.md).
+See [`docs/4mb-build/known-bugs.md`](Software/crosspoint-reader/docs/4mb-build/known-bugs.md).
 
 ---
 
