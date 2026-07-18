@@ -132,5 +132,7 @@ See [`docs/4mb-build/known-bugs.md`](Software/crosspoint-reader/docs/4mb-build/k
 ---
 
 ## License
+`/Hardware` are licensed under the
+[CERN-OHL-W v2](Hardware/LICENSE).
 
 Firmware modifications follow the license of the upstream [Crosspoint Reader](https://github.com/crosspoint-reader/crosspoint-reader) project.
