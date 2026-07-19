@@ -6,7 +6,7 @@ This guide walks through assembling the ESP32 E-Reader from a bare PCB to a work
 
 ## 1. Get the PCB made
 
-Order the PCB from [JLCPCB](https://jlcpcb.com/) using the Gerbers in [`Hardware/PCB/production`](../PCB/production). Components are sourced from [LCSC](https://www.lcsc.com/) — use the ready-to-upload BOM at [`Hardware/BOM/LCSC_ESP32_EReader_BOM - Ereader_bom-2.csv`](../BOM/LCSC_ESP32_EReader_BOM%20-%20Ereader_bom-2.csv) for parts ordering, and the interactive BOM at [`Hardware/BOM/BOM for building/ibom.html`](<../BOM/BOM for building/ibom.html>) to locate components on the board during assembly.
+Order the PCB from [JLCPCB](https://jlcpcb.com/) using the Gerbers in [`Hardware/PCB/production`](../PCB/production). Components are sourced from [LCSC](https://www.lcsc.com/) — use the ready-to-upload BOM at [`Hardware/BOM/LCSC_ESP32_EReader_BOM`](../BOM/LCSC_ESP32_EReader_BOM%20-%20Ereader_bom-2.csv) for parts ordering, and the interactive BOM at [`Hardware/BOM/BOM for building/ibom.html`](<../BOM/BOM for building/ibom.html>) to locate components on the board during assembly.
 
 You have two options:
 
