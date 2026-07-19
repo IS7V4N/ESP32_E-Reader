@@ -23,11 +23,16 @@ void HalFrontlight::setBrightness(uint8_t percent) {
     return;
   }
 
-  // Map 1-100% linearly onto [PWM_DUTY_MIN, PWM_DUTY_MAX].
+  // UI only exposes 10-100% in steps of 10 (see SettingsList.h ValueRange
+  // {0, 100, 10}), so 10% is the real floor. Clamp below that and map
+  // 10-100% linearly onto [PWM_DUTY_MIN, PWM_DUTY_MAX] so the UI's lowest
+  // step reaches the true minimum duty (1/255) instead of stopping short.
+  if (percent < 10) percent = 10;
+
   // LED driver is active-high: higher duty = brighter. No inversion needed.
   const uint8_t duty = static_cast<uint8_t>(
       PWM_DUTY_MIN +
-      (static_cast<uint16_t>(percent - 1) * (PWM_DUTY_MAX - PWM_DUTY_MIN)) / 99u);
+      (static_cast<uint16_t>(percent - 10) * (PWM_DUTY_MAX - PWM_DUTY_MIN)) / 90u);
 
   ledcWrite(FRONTLIGHT_PIN, duty);
   LOG_DBG("FLT", "Brightness %d%% -> duty %d/255", percent, duty);
