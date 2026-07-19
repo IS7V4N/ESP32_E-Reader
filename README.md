@@ -13,6 +13,8 @@ The hardware designs in `/Hardware` are licensed under the
 
 ## Hardware
 
+> Building your own? See the [Build guide](Hardware/docs/Build%20guide.md) for step-by-step assembly instructions.
+
 | Component  | Details                                             |
 | ---------- | --------------------------------------------------- |
 | MCU        | ESP32-C3 (4MB flash)                                |

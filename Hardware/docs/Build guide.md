@@ -55,7 +55,8 @@ The enclosure files are in [`Hardware/3D CAD`](../3D%20CAD).
 
 4. Once the connector is on, re-check the voltage rails for shorts *again* before actually plugging in the battery.
 
-![img1](Hardware/Images/Backplate_off)
+![Backplate removed, showing the battery connector](../Images/Backplate_off.jpg)
+
 ---
 
 ## 5. Flash the firmware
