@@ -1,5 +1,7 @@
 # ESP32 E-Reader
 
+![ESP32 E-reader](Hardware/Images/ESP32Ereader-cover.png)
+
 A custom-built e-ink reading device based on the ESP32-C3, designed for everyday use. Built around a 4.2" e-ink display with a frontlight for reading in the dark environment, running a modified version of the [Crosspoint](https://github.com/crosspoint-reader/crosspoint-reader) open-source firmware adapted for custom hardware. The goal was to build a capable, low-cost alternative to commercial e-readers with full control over both hardware and software.
 
 > **Note:** This is a fork of [Crosspoint Reader](https://github.com/crosspoint-reader/crosspoint-reader). See [What's changed from upstream](#whats-changed-from-upstream) for a summary of hardware-specific modifications.
