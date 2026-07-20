@@ -447,6 +447,16 @@ void EInkDisplay::displayBuffer(RefreshMode mode, const bool turnOffScreen) {
     mode = HALF_REFRESH;
   }
 
+  // TEMP DEBUG: redirect HALF_REFRESH -> FAST_REFRESH to test whether the 0xFC
+  // "Fast OTP waveform" is responsible for faint-gray-instead-of-black text.
+  // Placed here (not in refreshDisplay) so the RAM buffer-write branch below
+  // and the waveform selection in refreshDisplay() see the same, consistent mode.
+  // Revert by deleting this block once the test is done.
+  if (mode == HALF_REFRESH) {
+    if (Serial) Serial.printf("[%lu]   TEMP DEBUG: HALF_REFRESH requested, redirecting to FAST_REFRESH\n", millis());
+    mode = FAST_REFRESH;
+  }
+
   // If currently in grayscale mode, revert first to black/white
   if (inGrayscaleMode) {
     inGrayscaleMode = false;
