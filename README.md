@@ -131,12 +131,6 @@ git submodule update --init --recursive
 
 ---
 
-## Known issues
-
-See [`docs/4mb-build/known-bugs.md`](Software/crosspoint-reader/docs/4mb-build/known-bugs.md).
-
----
-
 ## License
 `/Hardware` are licensed under the
 [CERN-OHL-W v2](Hardware/LICENSE).
