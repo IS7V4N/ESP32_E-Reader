@@ -83,8 +83,27 @@ Based on [Crosspoint Reader](https://github.com/crosspoint-reader/crosspoint-rea
 - **partitions_4mb.csv** — custom partition scheme to fit 4MB flash (replaces upstream 16MB default)
 - **platformio.ini** — 4MB build configuration
 - **Display refresh** — modified refresh handling for Good Display 4.2" panel compatibility
+- **Dictionary** — English → Hungarian word lookup in the EPUB reader (see [Dictionary](#dictionary))
 
 See [`docs/4mb-build/`](Software/crosspoint-reader/docs/4mb-build/) for detailed documentation on the 4MB build process and known issues.
+
+## Dictionary
+
+Long-press **Confirm** (0.7 s) in an EPUB to enter dictionary mode. The four front buttons become a cursor:
+
+| Button (left to right) | Short press | Long press |
+| ---------------------- | ----------- | ---------- |
+| Left                   | cursor left | —          |
+| Back                   | cursor up   | leave dictionary mode |
+| Confirm                | cursor down | translate the selected word |
+| Right                  | cursor right | —         |
+
+The translation (a few Hungarian words) appears in a popup, any button closes it.
+
+The dictionary is a file on the SD card, `/dict/en-hu.dic` (about 4 MB, 118 000 word forms incl. inflections). It is
+built on a PC with [`scripts/build_dict.py`](Software/crosspoint-reader/scripts/build_dict.py) from Wiktionary
+(via [kaikki.org](https://kaikki.org)) with [FreeDict eng-hun](https://freedict.org) as a fallback; the script
+documents the steps and the file format. Wiktionary data is CC BY-SA 4.0, FreeDict eng-hun is GPL-2.0+.
 
 ---
 

@@ -12,6 +12,7 @@
 
 #include "CrossPointSettings.h"
 #include "CrossPointState.h"
+#include "DictionaryActivity.h"
 #include "EpubReaderChapterSelectionActivity.h"
 #include "EpubReaderFootnotesActivity.h"
 #include "EpubReaderPercentSelectionActivity.h"
@@ -135,6 +136,21 @@ void EpubReaderActivity::loop() {
       pageTurn(true);
       return;
     }
+  }
+
+  // Long press CONFIRM opens the dictionary word picker on the current page
+  if (mappedInput.wasReleased(MappedInputManager::Button::Confirm) &&
+      mappedInput.getHeldTime() >= ReaderUtils::DICTIONARY_LONG_PRESS_MS) {
+    if (section && section->pageCount > 0) {
+      int marginTop, marginRight, marginBottom, marginLeft;
+      renderer.getOrientedViewableTRBL(&marginTop, &marginRight, &marginBottom, &marginLeft);
+      marginTop += SETTINGS.screenMargin;
+      marginLeft += SETTINGS.screenMargin;
+      startActivityForResult(
+          std::make_unique<DictionaryActivity>(renderer, mappedInput, *section, marginLeft, marginTop),
+          [](const ActivityResult&) {});
+    }
+    return;
   }
 
   // Enter reader menu activity.
