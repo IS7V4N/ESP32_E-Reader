@@ -89,7 +89,7 @@ See [`docs/4mb-build/`](Software/crosspoint-reader/docs/4mb-build/) for detailed
 
 ## Dictionary
 
-Long-press **Confirm** (0.7 s) in an EPUB to enter dictionary mode. The four front buttons become a cursor:
+Long-press **Confirm** (0.5 s) in an EPUB to enter dictionary mode. The four front buttons become a cursor:
 
 | Button (left to right) | Short press | Long press |
 | ---------------------- | ----------- | ---------- |
