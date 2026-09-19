@@ -9,6 +9,7 @@
 #endif
 #include "home/FileBrowserActivity.h"
 #include "home/HomeActivity.h"
+#include "home/ReadingStatsActivity.h"
 #include "home/RecentBooksActivity.h"
 #ifndef CROSSPOINT_NO_WIFI
 #include "network/CrossPointWebServerActivity.h"
@@ -183,6 +184,10 @@ void ActivityManager::goToFileBrowser(std::string path) {
 
 void ActivityManager::goToRecentBooks() {
   replaceActivity(std::make_unique<RecentBooksActivity>(renderer, mappedInput));
+}
+
+void ActivityManager::goToReadingStats() {
+  replaceActivity(std::make_unique<ReadingStatsActivity>(renderer, mappedInput));
 }
 
 #ifndef CROSSPOINT_NO_KOREADER

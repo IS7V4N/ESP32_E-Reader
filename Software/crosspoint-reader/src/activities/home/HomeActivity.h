@@ -27,6 +27,7 @@ class HomeActivity final : public Activity {
   void onRecentsOpen();
   void onSettingsOpen();
   void onFileTransferOpen();
+  void onReadingStatsOpen();
 #ifndef CROSSPOINT_NO_KOREADER
   void onOpdsBrowserOpen();
 #endif

@@ -11,6 +11,7 @@
 #include "CrossPointSettings.h"
 #include "CrossPointState.h"
 #include "KOReaderCredentialStore.h"
+#include "ReadingStatsStore.h"
 #include "RecentBooksStore.h"
 #include "SettingsList.h"
 #include "WifiCredentialStore.h"
@@ -330,5 +331,60 @@ bool JsonSettingsIO::loadRecentBooks(RecentBooksStore& store, const char* json) 
   }
 
   LOG_DBG("RBS", "Recent books loaded from file (%d entries)", store.getCount());
+  return true;
+}
+
+// ---- ReadingStatsStore ----
+
+bool JsonSettingsIO::saveReadingStats(const ReadingStatsStore& store, const char* path) {
+  JsonDocument doc;
+
+  const BookStats& last = store.getLastBook();
+  doc["lastBookKey"] = last.key;
+  doc["lastBookSeconds"] = last.seconds;
+  doc["lastBookPageTurns"] = last.pageTurns;
+  doc["lastBookTitle"] = store.getLastBookTitle();
+
+  doc["totalSeconds"] = store.getTotalSeconds();
+  doc["totalPageTurns"] = store.getTotalPageTurns();
+  doc["finishedCount"] = store.getFinishedCount();
+
+  JsonArray arr = doc["finishedKeys"].to<JsonArray>();
+  for (const uint32_t key : store.getFinishedKeys()) {
+    arr.add(key);
+  }
+
+  String json;
+  serializeJson(doc, json);
+  return Storage.writeFile(path, json);
+}
+
+bool JsonSettingsIO::loadReadingStats(ReadingStatsStore& store, const char* json) {
+  JsonDocument doc;
+  auto error = deserializeJson(doc, json);
+  if (error) {
+    LOG_ERR("RST", "JSON parse error: %s", error.c_str());
+    return false;
+  }
+
+  store.lastBook.key = doc["lastBookKey"] | (uint32_t)0;
+  store.lastBook.seconds = doc["lastBookSeconds"] | (uint32_t)0;
+  store.lastBook.pageTurns = doc["lastBookPageTurns"] | (uint32_t)0;
+  store.lastBookTitle = doc["lastBookTitle"] | std::string("");
+
+  store.totalSeconds = doc["totalSeconds"] | (uint32_t)0;
+  store.totalPageTurns = doc["totalPageTurns"] | (uint32_t)0;
+  store.finishedCount = doc["finishedCount"] | (uint32_t)0;
+
+  store.finishedKeys.clear();
+  store.finishedKeys.reserve(ReadingStatsStore::MAX_FINISHED_KEYS);
+  JsonArray arr = doc["finishedKeys"].as<JsonArray>();
+  for (JsonVariant v : arr) {
+    if (store.finishedKeys.size() >= ReadingStatsStore::MAX_FINISHED_KEYS) break;
+    store.finishedKeys.push_back(v.as<uint32_t>());
+  }
+
+  LOG_DBG("RST", "Reading stats loaded: %us, %u turns, %u finished", store.totalSeconds, store.totalPageTurns,
+          store.finishedCount);
   return true;
 }

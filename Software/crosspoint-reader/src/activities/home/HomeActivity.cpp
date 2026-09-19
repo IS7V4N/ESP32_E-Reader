@@ -20,7 +20,7 @@
 #include "fontIds.h"
 
 int HomeActivity::getMenuItemCount() const {
-  int count = 4;  // File Browser, Recents, File transfer, Settings
+  int count = 5;  // File Browser, Recents, File transfer, Settings, Reading Stats
   if (!recentBooks.empty()) {
     count += recentBooks.size();
   }
@@ -198,7 +198,8 @@ void HomeActivity::loop() {
     const int opdsLibraryIdx = hasOpdsUrl ? idx++ : -1;
 #endif
     const int fileTransferIdx = idx++;
-    const int settingsIdx = idx;
+    const int settingsIdx = idx++;
+    const int readingStatsIdx = idx;
 
     if (selectorIndex < recentBooks.size()) {
       onSelectBook(recentBooks[selectorIndex].path);
@@ -214,6 +215,8 @@ void HomeActivity::loop() {
       onFileTransferOpen();
     } else if (menuSelectedIndex == settingsIdx) {
       onSettingsOpen();
+    } else if (menuSelectedIndex == readingStatsIdx) {
+      onReadingStatsOpen();
     }
   }
 }
@@ -234,8 +237,8 @@ void HomeActivity::render(RenderLock&&) {
 
   // Build menu items dynamically
   std::vector<const char*> menuItems = {tr(STR_BROWSE_FILES), tr(STR_MENU_RECENT_BOOKS), tr(STR_FILE_TRANSFER),
-                                        tr(STR_SETTINGS_TITLE)};
-  std::vector<UIIcon> menuIcons = {Folder, Recent, Transfer, Settings};
+                                        tr(STR_SETTINGS_TITLE), tr(STR_READING_STATS)};
+  std::vector<UIIcon> menuIcons = {Folder, Recent, Transfer, Settings, Book};
 
 #ifndef CROSSPOINT_NO_KOREADER
   if (hasOpdsUrl) {
@@ -277,6 +280,8 @@ void HomeActivity::onRecentsOpen() { activityManager.goToRecentBooks(); }
 void HomeActivity::onSettingsOpen() { activityManager.goToSettings(); }
 
 void HomeActivity::onFileTransferOpen() { activityManager.goToFileTransfer(); }
+
+void HomeActivity::onReadingStatsOpen() { activityManager.goToReadingStats(); }
 
 #ifndef CROSSPOINT_NO_KOREADER
 void HomeActivity::onOpdsBrowserOpen() { activityManager.goToBrowser(); }

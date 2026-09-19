@@ -7,6 +7,7 @@
 #include <algorithm>
 
 #include "MappedInputManager.h"
+#include "ReadingStatsStore.h"
 #include "RecentBooksStore.h"
 #include "components/UITheme.h"
 #include "fontIds.h"
@@ -101,7 +102,12 @@ void RecentBooksActivity::render(RenderLock&&) {
     GUI.drawList(
         renderer, Rect{0, contentTop, pageWidth, contentHeight}, recentBooks.size(), selectorIndex,
         [this](int index) { return recentBooks[index].title; }, [this](int index) { return recentBooks[index].author; },
-        [this](int index) { return UITheme::getFileIcon(recentBooks[index].path); });
+        [this](int index) { return UITheme::getFileIcon(recentBooks[index].path); },
+        // Marks books that reached the finished threshold while reading
+        [this](int index) {
+          return READING_STATS.isFinished(recentBooks[index].path) ? std::string(tr(STR_STATS_FINISHED))
+                                                                   : std::string();
+        });
   }
 
   // Help text

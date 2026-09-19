@@ -83,6 +83,7 @@ class ActivityManager {
   void goToSettings();
   void goToFileBrowser(std::string path = {});
   void goToRecentBooks();
+  void goToReadingStats();
 #ifndef CROSSPOINT_NO_KOREADER
   void goToBrowser();
 #endif

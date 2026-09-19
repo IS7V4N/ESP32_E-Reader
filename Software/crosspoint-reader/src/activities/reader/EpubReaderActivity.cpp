@@ -23,6 +23,7 @@
 #include "MappedInputManager.h"
 #include "QrDisplayActivity.h"
 #include "ReaderUtils.h"
+#include "ReadingStatsStore.h"
 #include "RecentBooksStore.h"
 #include "components/UITheme.h"
 #include "fontIds.h"
@@ -89,6 +90,12 @@ void EpubReaderActivity::onEnter() {
   APP_STATE.saveToFile();
   RECENT_BOOKS.addBook(epub->getPath(), epub->getTitle(), epub->getAuthor(), epub->getThumbBmpPath());
 
+  // Start the reading stats session for this book
+  READING_STATS.beginBook(epub->getPath(), epub->getTitle());
+  bookAlreadyFinished = READING_STATS.isFinished(epub->getPath());
+  statsLastTick = statsLastInput = millis();
+  statsSessionActive = true;
+
   // Trigger first update
   requestUpdate();
 }
@@ -101,8 +108,46 @@ void EpubReaderActivity::onExit() {
 
   APP_STATE.readerActivityLoadCount = 0;
   APP_STATE.saveToFile();
+
+  // Flush reading stats. This is the single SD write per reading session, and it also
+  // covers deep sleep since goToSleep() replaces the activity, which calls onExit().
+  // flushFinishedMark() is repeated here to catch a book that reached the threshold on the
+  // last rendered page, before loop() had a chance to pick the flag up.
+  if (statsSessionActive) {
+    statsSessionActive = false;
+    updateReadingTime();
+    flushFinishedMark();
+    READING_STATS.addSeconds(static_cast<uint32_t>(statsSessionMs / 1000));
+    statsSessionMs = 0;
+    READING_STATS.saveToFile();
+  }
+
   section.reset();
   epub.reset();
+}
+
+// Accumulates time spent reading, ignoring stretches longer than STATS_IDLE_CUTOFF_MS
+// without a page turn so a book left open does not distort the pages/minute figure.
+void EpubReaderActivity::updateReadingTime() {
+  const unsigned long now = millis();
+  const unsigned long delta = now - statsLastTick;
+  statsLastTick = now;
+
+  if (delta <= STATS_MAX_TICK_MS && (now - statsLastInput) <= STATS_IDLE_CUTOFF_MS) {
+    statsSessionMs += delta;
+  }
+}
+
+// Picks up the finished flag raised by render() on the render task.
+// Returns true when the book was newly marked, i.e. the caller must persist.
+bool EpubReaderActivity::flushFinishedMark() {
+  if (!pendingFinishedMark) {
+    return false;
+  }
+  pendingFinishedMark = false;
+  bookAlreadyFinished = true;
+
+  return epub && READING_STATS.markFinished(epub->getPath());
 }
 
 void EpubReaderActivity::loop() {
@@ -110,6 +155,12 @@ void EpubReaderActivity::loop() {
     // Should never happen
     finish();
     return;
+  }
+
+  updateReadingTime();
+  if (flushFinishedMark()) {
+    // Written exactly once per book, ever.
+    READING_STATS.saveToFile();
   }
 
   if (automaticPageTurnActive) {
@@ -503,6 +554,10 @@ void EpubReaderActivity::pageTurn(bool isForwardTurn) {
     }
   }
   lastPageTurnTime = millis();
+  // Counts both directions and automatic page turns. Long-press chapter skip bypasses this
+  // function on purpose - that is a jump, not a page read. RAM only, no SD write.
+  READING_STATS.addPageTurn();
+  statsLastInput = lastPageTurnTime;
   requestUpdate();
 }
 
@@ -657,6 +712,17 @@ void EpubReaderActivity::render(RenderLock&& lock) {
   }
   silentIndexNextChapterIfNeeded(viewportWidth, viewportHeight);
   saveProgress(currentSpineIndex, section->currentPage, section->pageCount);
+
+  // Mark the book as read once it reaches the finished threshold. calculateProgress() works off
+  // the in-memory cumulative spine sizes, so this costs no file I/O. We use currentPage + 1
+  // (pages completed) rather than currentPage so the final page of a short closing chapter
+  // actually reaches the threshold. The flag is consumed by loop() on the main task.
+  if (!bookAlreadyFinished && !pendingFinishedMark && epub->getBookSize() > 0 && section->pageCount > 0) {
+    const float chapterProgress = static_cast<float>(section->currentPage + 1) / static_cast<float>(section->pageCount);
+    if (epub->calculateProgress(currentSpineIndex, chapterProgress) >= BOOK_FINISHED_THRESHOLD) {
+      pendingFinishedMark = true;
+    }
+  }
 
   if (pendingScreenshot) {
     pendingScreenshot = false;

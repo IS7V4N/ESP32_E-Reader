@@ -28,6 +28,27 @@ class EpubReaderActivity final : public Activity {
   bool skipNextButtonCheck = false;  // Skip button processing for one frame after subactivity exit
   bool automaticPageTurnActive = false;
 
+  // Reading stats. Accumulated in RAM during the session and flushed once in onExit(),
+  // which also covers deep sleep (enterDeepSleep -> goToSleep -> exitActivity -> onExit).
+  unsigned long statsSessionMs = 0UL;
+  unsigned long statsLastTick = 0UL;
+  unsigned long statsLastInput = 0UL;
+  // False until onEnter() accepted the book, so a failed open flushes nothing.
+  bool statsSessionActive = false;
+  bool bookAlreadyFinished = false;
+  // Set by render() (render task), consumed by loop() (main task) so the SD write happens
+  // off the render path. Single writer, single reader, idempotent - no mutex needed.
+  volatile bool pendingFinishedMark = false;
+  // Time on a page beyond this without a page turn does not count as reading time.
+  static constexpr unsigned long STATS_IDLE_CUTOFF_MS = 3UL * 60 * 1000;
+  // Swallows pathological loop gaps (e.g. a long blocking operation) instead of counting them.
+  static constexpr unsigned long STATS_MAX_TICK_MS = 5000UL;
+  // A book counts as read once it reaches this fraction of its total size.
+  static constexpr float BOOK_FINISHED_THRESHOLD = 0.99f;
+
+  void updateReadingTime();
+  bool flushFinishedMark();
+
   // Footnote support
   std::vector<FootnoteEntry> currentPageFootnotes;
   struct SavedPosition {
