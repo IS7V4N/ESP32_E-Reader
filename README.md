@@ -4,7 +4,6 @@
 
 A custom-built e-ink reading device based on the ESP32-C3, designed for everyday use. Built around a 4.2" e-ink display with a frontlight for reading in the dark environment, running a modified version of the [Crosspoint](https://github.com/crosspoint-reader/crosspoint-reader) open-source firmware adapted for custom hardware. The goal was to build a capable, low-cost alternative to commercial e-readers with full control over both hardware and software.
 
-> **Note:** This is a fork of [Crosspoint Reader](https://github.com/crosspoint-reader/crosspoint-reader). See [What's changed from upstream](#whats-changed-from-upstream) for a summary of hardware-specific modifications.
 
 ---
 ## Hardware License
@@ -91,12 +90,12 @@ See [`docs/4mb-build/`](Software/crosspoint-reader/docs/4mb-build/) for detailed
 
 Long-press **Confirm** (0.5 s) in an EPUB to enter dictionary mode. The four front buttons become a cursor:
 
-| Button (left to right) | Short press | Long press |
-| ---------------------- | ----------- | ---------- |
-| Left                   | cursor left | —          |
-| Back                   | cursor up   | leave dictionary mode |
-| Confirm                | cursor down | translate the selected word |
-| Right                  | cursor right | —         |
+| Button (left to right) | Short press  | Long press                  |
+| ---------------------- | ------------ | --------------------------- |
+| Left                   | cursor left  | —                           |
+| Back                   | cursor up    | leave dictionary mode       |
+| Confirm                | cursor down  | translate the selected word |
+| Right                  | cursor right | —                           |
 
 The translation (a few Hungarian words) appears in a popup, any button closes it.
 
