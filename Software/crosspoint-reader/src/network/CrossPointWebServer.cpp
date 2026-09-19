@@ -12,9 +12,11 @@
 
 #include "CrossPointSettings.h"
 #include "SettingsList.h"
+#include "WifiCredentialStore.h"
 #include "WebDAVHandler.h"
 #include "html/HomePageHtml.generated.h"
 #include "html/SettingsPageHtml.generated.h"
+#include "html/WifiPageHtml.generated.h"
 #ifndef CROSSPOINT_NO_WEBUI
 #include "html/FilesPageHtml.generated.h"
 #include "html/js/jszip_minJs.generated.h"
@@ -152,6 +154,13 @@ void CrossPointWebServer::begin() {
   server->on("/settings", HTTP_GET, [this] { handleSettingsPage(); });
   server->on("/api/settings", HTTP_GET, [this] { handleGetSettings(); });
   server->on("/api/settings", HTTP_POST, [this] { handlePostSettings(); });
+
+  // WiFi credential endpoints
+  server->on("/wifi", HTTP_GET, [this] { handleWifiPage(); });
+  server->on("/api/wifi", HTTP_GET, [this] { handleGetWifi(); });
+  server->on("/api/wifi", HTTP_POST, [this] { handlePostWifi(); });
+  server->on("/api/wifi/delete", HTTP_POST, [this] { handleDeleteWifi(); });
+  server->on("/api/wifi/primary", HTTP_POST, [this] { handleSetPrimaryWifi(); });
 
   server->onNotFound([this] { handleNotFound(); });
   LOG_DBG("WEB", "[MEM] Free heap after route setup: %d bytes", ESP.getFreeHeap());
@@ -1228,6 +1237,139 @@ void CrossPointWebServer::handlePostSettings() {
 
   LOG_DBG("WEB", "Applied %d setting(s)", applied);
   server->send(200, "text/plain", String("Applied ") + String(applied) + " setting(s)");
+}
+
+namespace {
+constexpr size_t WIFI_SSID_MAX_LEN = 32;
+constexpr size_t WIFI_PASSWORD_MAX_LEN = 64;
+
+// Parses the JSON request body and extracts "ssid". Sends the error response and returns false on failure.
+bool parseWifiRequest(WebServer* server, JsonDocument& doc, std::string& ssid) {
+  if (!server->hasArg("plain")) {
+    server->send(400, "text/plain", "Missing JSON body");
+    return false;
+  }
+  const DeserializationError err = deserializeJson(doc, server->arg("plain"));
+  if (err) {
+    server->send(400, "text/plain", String("Invalid JSON: ") + err.c_str());
+    return false;
+  }
+  ssid = doc["ssid"] | "";
+  if (ssid.empty() || ssid.size() > WIFI_SSID_MAX_LEN) {
+    server->send(400, "text/plain", "Invalid SSID");
+    return false;
+  }
+  return true;
+}
+}  // namespace
+
+void CrossPointWebServer::handleWifiPage() const {
+  sendHtmlContent(server.get(), WifiPageHtml, sizeof(WifiPageHtml));
+  LOG_DBG("WEB", "Served WiFi page");
+}
+
+void CrossPointWebServer::handleGetWifi() const {
+  // The store is only loaded by WifiSelectionActivity, which does not run in AP mode
+  WIFI_STORE.loadFromFile();
+
+  server->setContentLength(CONTENT_LENGTH_UNKNOWN);
+  server->send(200, "application/json", "");
+  server->sendContent("{\"networks\":[");
+
+  const std::string& primary = WIFI_STORE.getLastConnectedSsid();
+  JsonDocument doc;
+  String output;
+  bool seenFirst = false;
+
+  // Passwords are intentionally never sent to the browser
+  for (const auto& cred : WIFI_STORE.getCredentials()) {
+    doc.clear();
+    doc["ssid"] = cred.ssid;
+    doc["primary"] = (cred.ssid == primary);
+
+    output.clear();
+    serializeJson(doc, output);
+    if (seenFirst) {
+      server->sendContent(",");
+    }
+    seenFirst = true;
+    server->sendContent(output);
+  }
+
+  char tail[24];
+  snprintf(tail, sizeof(tail), "],\"max\":%zu}", WifiCredentialStore::getMaxNetworks());
+  server->sendContent(tail);
+  server->sendContent("");
+  LOG_DBG("WEB", "Served WiFi API");
+}
+
+void CrossPointWebServer::handlePostWifi() {
+  JsonDocument doc;
+  std::string ssid;
+  if (!parseWifiRequest(server.get(), doc, ssid)) {
+    return;
+  }
+
+  const std::string password = doc["password"] | "";
+  if (password.size() > WIFI_PASSWORD_MAX_LEN) {
+    server->send(400, "text/plain", "Password too long");
+    return;
+  }
+
+  WIFI_STORE.loadFromFile();
+  if (!WIFI_STORE.hasSavedCredential(ssid) && WIFI_STORE.getCredentials().size() >= WifiCredentialStore::getMaxNetworks()) {
+    server->send(409, "text/plain", "Network limit reached, delete one first");
+    return;
+  }
+
+  if (!WIFI_STORE.addCredential(ssid, password)) {
+    LOG_ERR("WEB", "Failed to save WiFi credential");
+    server->send(500, "text/plain", "Failed to save network");
+    return;
+  }
+
+  LOG_DBG("WEB", "Saved WiFi credential for: %s", ssid.c_str());
+  server->send(200, "text/plain", "Saved");
+}
+
+void CrossPointWebServer::handleDeleteWifi() {
+  JsonDocument doc;
+  std::string ssid;
+  if (!parseWifiRequest(server.get(), doc, ssid)) {
+    return;
+  }
+
+  WIFI_STORE.loadFromFile();
+  if (!WIFI_STORE.hasSavedCredential(ssid)) {
+    server->send(404, "text/plain", "Network not found");
+    return;
+  }
+
+  if (!WIFI_STORE.removeCredential(ssid)) {
+    LOG_ERR("WEB", "Failed to remove WiFi credential");
+    server->send(500, "text/plain", "Failed to delete network");
+    return;
+  }
+
+  LOG_DBG("WEB", "Removed WiFi credential for: %s", ssid.c_str());
+  server->send(200, "text/plain", "Deleted");
+}
+
+void CrossPointWebServer::handleSetPrimaryWifi() {
+  JsonDocument doc;
+  std::string ssid;
+  if (!parseWifiRequest(server.get(), doc, ssid)) {
+    return;
+  }
+
+  WIFI_STORE.loadFromFile();
+  if (!WIFI_STORE.hasSavedCredential(ssid)) {
+    server->send(404, "text/plain", "Network not found");
+    return;
+  }
+
+  WIFI_STORE.setLastConnectedSsid(ssid);
+  server->send(200, "text/plain", "Updated");
 }
 
 // WebSocket callback trampoline

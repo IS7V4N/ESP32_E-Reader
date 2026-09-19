@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>CrossPoint Reader - Settings</title>
+  <title>CrossPoint Reader - WiFi</title>
   <style>
     :root {
       --font-color: #333;
@@ -207,6 +207,85 @@
       from { transform: rotate(0deg); }
       to { transform: rotate(360deg); }
     }
+    .net-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border-color);
+    }
+    .net-row:last-child {
+      border-bottom: none;
+    }
+    .net-ssid {
+      font-weight: 500;
+      flex: 1;
+      min-width: 0;
+      overflow-wrap: anywhere;
+    }
+    .badge {
+      background-color: var(--accent-color);
+      color: white;
+      border-radius: 10px;
+      padding: 2px 8px;
+      font-size: 0.75em;
+      margin-left: 6px;
+    }
+    .net-actions {
+      display: flex;
+      gap: 6px;
+    }
+    .btn {
+      padding: 6px 12px;
+      border: 1px solid var(--accent-color);
+      border-radius: 4px;
+      background: transparent;
+      color: var(--font-color);
+      cursor: pointer;
+    }
+    .btn:hover {
+      background-color: var(--accent-hover-color);
+      color: white;
+    }
+    .btn.danger {
+      border-color: #c0392b;
+    }
+    .btn.danger:hover {
+      background-color: #c0392b;
+    }
+    .form-row {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      margin-bottom: 12px;
+    }
+    .form-row label {
+      color: var(--label-color);
+      font-weight: 500;
+    }
+    .form-row input[type="text"],
+    .form-row input[type="password"] {
+      padding: 8px 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 1em;
+      background: var(--card-bg);
+      color: var(--font-color);
+    }
+    .show-pw {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 12px;
+      color: var(--label-color);
+    }
+    .hint {
+      color: var(--label-color);
+      font-size: 0.9em;
+      margin: 0 0 12px 0;
+    }
     @media (max-width: 600px) {
       body {
         padding: 10px;
@@ -237,25 +316,41 @@
   </style>
 </head>
 <body>
-  <h1>⚙️ Settings</h1>
+  <h1>📶 WiFi</h1>
 
   <div class="nav-links">
     <a href="/">Home</a>
     <a href="/files">File Manager</a>
-    <a href="/settings" class="active">Settings</a>
-    <a href="/wifi">WiFi</a>
+    <a href="/settings">Settings</a>
+    <a href="/wifi" class="active">WiFi</a>
   </div>
 
   <div id="message" class="message"></div>
 
-  <div id="settings-container">
-    <div class="loader-container">
-      <span class="loader"></span>
+  <div class="card">
+    <h2>Saved networks</h2>
+    <div id="networks">
+      <div class="loader-container">
+        <span class="loader"></span>
+      </div>
     </div>
   </div>
 
-  <div class="save-container" id="save-container" style="display:none;">
-    <button class="save-btn" id="saveBtn" onclick="saveSettings()">Save Settings</button>
+  <div class="card">
+    <h2>Add / update network</h2>
+    <p class="hint">Saved networks are used automatically by the device. Saving an existing SSID overwrites its password. Leave the password empty for open networks.</p>
+    <div class="form-row">
+      <label for="ssid">SSID</label>
+      <input type="text" id="ssid" maxlength="32" autocomplete="off" autocapitalize="none" spellcheck="false">
+    </div>
+    <div class="form-row">
+      <label for="password">Password</label>
+      <input type="password" id="password" maxlength="64" autocomplete="off" autocapitalize="none" spellcheck="false">
+    </div>
+    <label class="show-pw"><input type="checkbox" id="showPw" onchange="togglePassword()"> Show password</label>
+    <div class="save-container">
+      <button class="save-btn" id="saveBtn" onclick="saveNetwork()">Save network</button>
+    </div>
   </div>
 
   <div class="card">
@@ -265,9 +360,6 @@
   </div>
 
 <script>
-  let allSettings = [];
-  let originalValues = {};
-
   function escapeHtml(unsafe) {
     return unsafe
       .replaceAll("&", "&amp;")
@@ -285,157 +377,98 @@
     setTimeout(function() { msg.style.display = 'none'; }, 4000);
   }
 
-  function renderControl(setting) {
-    const id = 'setting-' + setting.key;
-
-    if (setting.type === 'toggle') {
-      const checked = setting.value ? 'checked' : '';
-      return '<label class="toggle-switch">' +
-        '<input type="checkbox" id="' + id + '" ' + checked + ' onchange="markChanged()">' +
-        '<span class="toggle-slider"></span></label>';
-    }
-
-    if (setting.type === 'enum') {
-      let html = '<select id="' + id + '" onchange="markChanged()">';
-      setting.options.forEach(function(opt, idx) {
-        const selected = idx === setting.value ? ' selected' : '';
-        html += '<option value="' + idx + '"' + selected + '>' + escapeHtml(opt) + '</option>';
-      });
-      html += '</select>';
-      return html;
-    }
-
-    if (setting.type === 'value') {
-      return '<input type="number" id="' + id + '" value="' + setting.value + '"' +
-        ' min="' + setting.min + '" max="' + setting.max + '" step="' + setting.step + '"' +
-        ' onchange="markChanged()">';
-    }
-
-    if (setting.type === 'string') {
-      const inputType = setting.name.toLowerCase().includes('password') ? 'password' : 'text';
-      const val = setting.value || '';
-      return '<input type="' + inputType + '" id="' + id + '" value="' + escapeHtml(val) + '"' +
-        ' oninput="markChanged()">';
-    }
-
-    return '';
+  function togglePassword() {
+    document.getElementById('password').type =
+      document.getElementById('showPw').checked ? 'text' : 'password';
   }
 
-  function getValue(setting) {
-    const el = document.getElementById('setting-' + setting.key);
-    if (!el) return undefined;
-
-    if (setting.type === 'toggle') {
-      return el.checked ? 1 : 0;
+  async function postJson(url, payload) {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (!response.ok) {
+      const text = await response.text();
+      throw new Error(text || 'Request failed');
     }
-    if (setting.type === 'enum') {
-      return parseInt(el.value, 10);
-    }
-    if (setting.type === 'value') {
-      return parseInt(el.value, 10);
-    }
-    if (setting.type === 'string') {
-      return el.value;
-    }
-    return undefined;
   }
 
-  function markChanged() {
-    document.getElementById('saveBtn').disabled = false;
-  }
-
-  async function loadSettings() {
+  async function loadNetworks() {
+    const container = document.getElementById('networks');
     try {
-      const response = await fetch('/api/settings');
-      if (!response.ok) {
-        throw new Error('Failed to load settings: ' + response.status);
-      }
-      allSettings = await response.json();
+      const response = await fetch('/api/wifi');
+      if (!response.ok) throw new Error('Failed to load');
+      const data = await response.json();
+      const list = data.networks || [];
 
-      // Store original values
-      originalValues = {};
-      allSettings.forEach(function(s) {
-        originalValues[s.key] = s.value;
-      });
-
-      // Group by category
-      const groups = {};
-      allSettings.forEach(function(s) {
-        if (!groups[s.category]) groups[s.category] = [];
-        groups[s.category].push(s);
-      });
-
-      const container = document.getElementById('settings-container');
-      let html = '';
-
-      for (const category in groups) {
-        html += '<div class="card"><h2>' + escapeHtml(category) + '</h2>';
-        groups[category].forEach(function(s) {
-          html += '<div class="setting-row">' +
-            '<span class="setting-name">' + escapeHtml(s.name) + '</span>' +
-            '<span class="setting-control">' + renderControl(s) + '</span>' +
-            '</div>';
-        });
-        html += '</div>';
+      if (list.length === 0) {
+        container.innerHTML = '<p class="hint">No saved networks.</p>';
+        return;
       }
 
-      container.innerHTML = html;
-      document.getElementById('save-container').style.display = '';
-      document.getElementById('saveBtn').disabled = true;
+      container.innerHTML = list.map(function(n, idx) {
+        const badge = n.primary ? '<span class="badge">primary</span>' : '';
+        const primaryBtn = n.primary ? '' :
+          '<button class="btn" onclick="setPrimary(' + idx + ')">Make primary</button>';
+        return '<div class="net-row"><span class="net-ssid">' + escapeHtml(n.ssid) + badge + '</span>' +
+          '<span class="net-actions">' + primaryBtn +
+          '<button class="btn danger" onclick="removeNetwork(' + idx + ')">Delete</button></span></div>';
+      }).join('');
+      window.savedNetworks = list;
     } catch (e) {
       console.error(e);
-      document.getElementById('settings-container').innerHTML =
-        '<div class="card"><p style="text-align:center;color:#e74c3c;">Failed to load settings</p></div>';
+      container.innerHTML = '<p style="text-align:center;color:#e74c3c;">Failed to load networks</p>';
     }
   }
 
-  async function saveSettings() {
-    const btn = document.getElementById('saveBtn');
-    btn.disabled = true;
-    btn.textContent = 'Saving...';
-
-    // Collect only changed values
-    const changes = {};
-    allSettings.forEach(function(s) {
-      const current = getValue(s);
-      if (current !== undefined && current !== originalValues[s.key]) {
-        changes[s.key] = current;
-      }
-    });
-
-    if (Object.keys(changes).length === 0) {
-      showMessage('No changes to save.', false);
-      btn.textContent = 'Save Settings';
+  async function saveNetwork() {
+    const ssid = document.getElementById('ssid').value;
+    const password = document.getElementById('password').value;
+    if (!ssid) {
+      showMessage('SSID is required.', true);
       return;
     }
 
+    const btn = document.getElementById('saveBtn');
+    btn.disabled = true;
     try {
-      const response = await fetch('/api/settings', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(changes)
-      });
-
-      if (!response.ok) {
-        const text = await response.text();
-        throw new Error(text || 'Save failed');
-      }
-
-      // Update original values to new values
-      for (const key in changes) {
-        originalValues[key] = changes[key];
-      }
-
-      showMessage('Settings saved successfully!', false);
+      await postJson('/api/wifi', { ssid: ssid, password: password });
+      document.getElementById('ssid').value = '';
+      document.getElementById('password').value = '';
+      showMessage('Network saved.', false);
+      await loadNetworks();
     } catch (e) {
-      console.error(e);
       showMessage('Error: ' + e.message, true);
     }
-
-    btn.textContent = 'Save Settings';
+    btn.disabled = false;
   }
 
-  loadSettings();
+  async function removeNetwork(idx) {
+    const net = window.savedNetworks[idx];
+    if (!net || !confirm('Delete "' + net.ssid + '"?')) return;
+    try {
+      await postJson('/api/wifi/delete', { ssid: net.ssid });
+      showMessage('Network deleted.', false);
+      await loadNetworks();
+    } catch (e) {
+      showMessage('Error: ' + e.message, true);
+    }
+  }
+
+  async function setPrimary(idx) {
+    const net = window.savedNetworks[idx];
+    if (!net) return;
+    try {
+      await postJson('/api/wifi/primary', { ssid: net.ssid });
+      showMessage('Primary network updated.', false);
+      await loadNetworks();
+    } catch (e) {
+      showMessage('Error: ' + e.message, true);
+    }
+  }
+
+  loadNetworks();
 </script>
 </body>
 </html>

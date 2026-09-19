@@ -52,6 +52,8 @@ class WifiCredentialStore {
   bool removeCredential(const std::string& ssid);
   const WifiCredential* findCredential(const std::string& ssid) const;
 
+  static constexpr size_t getMaxNetworks() { return MAX_NETWORKS; }
+
   // Get all stored credentials (for UI display)
   const std::vector<WifiCredential>& getCredentials() const { return credentials; }
 
